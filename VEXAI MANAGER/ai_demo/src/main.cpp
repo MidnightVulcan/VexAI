@@ -34,11 +34,76 @@ ai::jetson  jetson_comms;
 
 #if defined(MANAGER_ROBOT)
 #pragma message("building for the manager")
-ai::robot_link       link( PORT11, "robot_32456_1", linkType::manager );
+ai::robot_link       link( PORT1, "robot_32456_1", linkType::manager );
 #else
 #pragma message("building for the worker")
-ai::robot_link       link( PORT11, "robot_32456_1", linkType::worker );
+ai::robot_link       link( PORT1, "robot_32456_1", linkType::worker );
 #endif
+
+
+//   FL (2)         FR (9)
+//             ^
+//    //       |      //
+//    // ------------ //
+//    //       |      //
+//             |
+//             |
+//             |
+//    //       |      //
+//    // ------------ //
+//    //              //
+//
+//    BL (11)        BR (20)
+
+motor MotorFL = motor(PORT2, ratio18_1, false);
+motor MotorFR = motor(PORT9, ratio18_1, true);
+
+motor MotorBL = motor(PORT11, ratio18_1, false);
+motor MotorBR = motor(PORT20, ratio18_1, true);
+
+motor Motors[4] = {MotorFL, MotorFR, MotorBL, MotorBR};
+
+
+motor DebuggingMotor(PORT6, ratio18_1, false);
+
+inertial IntertiaSensor(PORT7);
+
+int InstantiatePeripherals() {
+  if (!IntertiaSensor.installed()){
+    DebuggingMotor.spin(directionType::rev);
+    this_thread::sleep_for(1000);
+    DebuggingMotor.stop();
+    return -1;
+  }
+  else {
+    DebuggingMotor.spin(directionType::fwd);
+    this_thread::sleep_for(1000);
+    DebuggingMotor.stop();
+  }
+  
+  for (int i = 0; i < 4; i++){
+    if (!Motors[i].installed()){
+      return -1;
+    }
+    Motors[i].spin(directionType::fwd);
+    this_thread::sleep_for(1000);
+    Motors[i].stop();
+  }
+
+  
+  return 1;
+  
+
+  return 1;
+}
+
+
+
+
+
+
+
+
 
 /*---------------------------------------------------------------------------*/
 /*                                                                           */
@@ -151,6 +216,7 @@ int main() {
     // start the status update display
     thread t1(dashboardTask);
     thread t2(EvanInit);
+    thread t3(InstantiatePeripherals);
     // Set up callbacks for autonomous and driver control periods.
     Competition.autonomous(autonomousMain);
 

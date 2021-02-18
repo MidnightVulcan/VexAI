@@ -34,10 +34,10 @@ ai::jetson  jetson_comms;
 
 #if defined(MANAGER_ROBOT)
 #pragma message("building for the manager")
-ai::robot_link       link( PORT11, "robot_32456_1", linkType::manager );
+ai::robot_link       link( PORT1, "robot_32456_1", linkType::manager );
 #else
 #pragma message("building for the worker")
-ai::robot_link       link( PORT11, "robot_32456_1", linkType::worker );
+ai::robot_link       link( PORT1, "robot_32456_1", linkType::worker );
 #endif
 
 /*---------------------------------------------------------------------------*/
@@ -113,25 +113,27 @@ void autonomousMain(void) {
 vex::message_link msg(PORT1, "mywackylink", linkType::worker);
 
 void UpdateLoop() {
-  triport trip = triport(0);
-  limit limitSwitch = limit(trip.H);
+  //triport trip = triport(0);
+  //limit limitSwitch = limit(trip.H);
+  limit limitSwitch = limit(Brain.ThreeWirePort.H);
   bool wasPressed = false;
   //limitSwitch = limit();
   while(true){
   
 
-    //if (wasPressed != limitSwitch.pressing() && limitSwitch.pressing() == true){
-      // if (wasPressed){
-      //   msg.send("stop", 0);
-      // } else {
-      //   msg.send("start", 0);
-      // } 
+    if (wasPressed != limitSwitch.pressing()){
+       if (wasPressed){
+         msg.send("stop", 0);
+       } else {
+         msg.send("start", 0);
+       } 
       
-      //wasPressed = !wasPressed;
-    if (limitSwitch.pressing()){
-      msg.send("start");
-    }
+      wasPressed = !wasPressed;
+    //if (limitSwitch.pressing()){
+    //  msg.send("start");
     //}
+    
+    }
     
     //bool pressed = vex::limit::value;
   
