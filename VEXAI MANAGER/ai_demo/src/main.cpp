@@ -57,33 +57,32 @@ ai::robot_link       link( PORT1, "robot_32456_1", linkType::worker );
 
 motor MotorFL = motor(PORT2, ratio18_1, false);
 motor MotorFR = motor(PORT9, ratio18_1, true);
-
 motor MotorBL = motor(PORT11, ratio18_1, false);
 motor MotorBR = motor(PORT20, ratio18_1, true);
+
+motor_group LeftDriveSmart = motor_group(MotorFL, MotorBL);
+motor_group RightDriveSmart = motor_group(MotorFR, MotorBR);
+
+// TODO work out track width, wheel base and gear ratio
+// drivetrain Drivetrain = drivetrain(LeftDriveSmart, RightDriveSmart, 319.19, trackWidth, wheelBase, mm, gearRatio);
 
 motor Motors[4] = {MotorFL, MotorFR, MotorBL, MotorBR};
 
 
-motor DebuggingMotor(PORT6, ratio18_1, false);
 
 inertial IntertiaSensor(PORT7);
 
+// TODO is this rlly neccesary
 int InstantiatePeripherals() {
   if (!IntertiaSensor.installed()){
-    DebuggingMotor.spin(directionType::rev);
-    this_thread::sleep_for(1000);
-    DebuggingMotor.stop();
     return -1;
   }
   else {
-    DebuggingMotor.spin(directionType::fwd);
-    this_thread::sleep_for(1000);
-    DebuggingMotor.stop();
   }
   
   for (int i = 0; i < 4; i++){
     if (!Motors[i].installed()){
-      return -1;
+      return -1;   
     }
     Motors[i].spin(directionType::fwd);
     this_thread::sleep_for(1000);
@@ -92,13 +91,99 @@ int InstantiatePeripherals() {
 
   
   return 1;
-  
-
-  return 1;
 }
 
 
+// if the drivetrain declaration doesn't work we can use this
+// drive left 200mm at 50% power on a point
+// use case drive('l', 200, 50, 'p')
+//wheel circumference = 319.1858136mm
+void drive(char dir, double dist, int speed, char turnStyle) {
+	double revo = dist / 319.1858136;
+  switch (dir) {
+	//forward
+	case 'f':
+		MotorFL.setVelocity(speed, velocityUnits::pct);
+		MotorFR.setVelocity(speed, velocityUnits::pct);
+		MotorBL.setVelocity(speed, velocityUnits::pct);
+		MotorBR.setVelocity(speed, velocityUnits::pct);
 
+		MotorFL.rotateFor(revo, rotationUnits::rev, false);
+		MotorFR.rotateFor(revo, rotationUnits::rev, false);
+		MotorBL.rotateFor(revo, rotationUnits::rev, false);
+		MotorBR.rotateFor(revo, rotationUnits::rev, false);
+
+		break;
+
+	//backwards
+	case 'b':
+		MotorFL.setVelocity(-speed, velocityUnits::pct);
+		MotorFR.setVelocity(-speed, velocityUnits::pct);
+		MotorBL.setVelocity(-speed, velocityUnits::pct);
+		MotorBR.setVelocity(-speed, velocityUnits::pct);
+
+		MotorFL.rotateFor(revo, rotationUnits::rev, false);
+		MotorFR.rotateFor(revo, rotationUnits::rev, false);
+		MotorBL.rotateFor(revo, rotationUnits::rev, false);
+		MotorBR.rotateFor(revo, rotationUnits::rev, false);
+
+		break;
+
+	//left
+	case 'l':
+		// turn about a point
+		if (turnStyle == 'a') {
+			MotorFR.setVelocity(speed, velocityUnits::pct);
+			MotorBR.setVelocity(speed, velocityUnits::pct);
+
+			MotorFR.rotateFor(revo, rotationUnits::rev, false)
+			MotorBR.rotateFor(revo, rotationUnits::rev, false)
+		} 
+		//turn on a point
+		else if (turnStyle == 'p') {
+			MotorFL.setVelocity(-speed, velocityUnits::pct);	
+			MotorFR.setVelocity(-speed, velocityUnits::pct);
+			MotorBL.setVelocity(speed, velocityUnits::pct);
+			MotorBR.setVelocity(speed, velocityUnits::pct);
+
+			MotorFL.rotateFor(revo, rotationUnits::rev, false);
+			MotorFR.rotateFor(revo, rotationUnits::rev, false);
+			MotorBL.rotateFor(revo, rotationUnits::rev, false);
+			MotorBR.rotateFor(revo, rotationUnits::rev, false);
+		}
+
+		break;
+
+	// right
+	case 'r':
+		// turn about a point
+		if (turnStyle == 'a') {
+			MotorFL.setVelocity(speed, velocityUnits::pct);
+			MotorBL.setVelocity(speed, velocityUnits::pct);
+
+			MotorFL.rotateFor(revo, rotationUnits::rev, false)
+			MotorBL.rotateFor(revo, rotationUnits::rev, false)
+		} 
+		//turn on a point
+		else if (turnStyle == 'p') {
+			MotorFL.setVelocity(speed, velocityUnits::pct);	
+			MotorFR.setVelocity(speed, velocityUnits::pct);
+			MotorBL.setVelocity(-speed, velocityUnits::pct);
+			MotorBR.setVelocity(-speed, velocityUnits::pct);
+
+			MotorFL.rotateFor(revo, rotationUnits::rev, false);
+			MotorFR.rotateFor(revo, rotationUnits::rev, false);
+			MotorBL.rotateFor(revo, rotationUnits::rev, false);
+			MotorBR.rotateFor(revo, rotationUnits::rev, false);
+		}
+
+		break;
+
+	
+	default:
+		break;
+	}
+}
 
 
 
@@ -181,10 +266,10 @@ vex::message_link msg = message_link(PORT1, "mywackylink", linkType::manager);
 
 motor Motor10(PORT10, ratio18_1, false);
 
-void started(const char *, const char *,double){
+void started(const char *, const char *, double){
   Motor10.spin(fwd);
 }
-void stopped(const char *, const char *,double){
+void stopped(const char *, const char *, double){
   Motor10.stop();
 }
 
@@ -204,8 +289,9 @@ void EvanInit(){
 
 
 int main() {
-    // Initializing Robot Configuration. DO NOT REMOVE!
     vexcodeInit();
+    EvanInit();
+    InstantiatePeripherals();
 
     // local storage for latest data from the Jetson Nano
     static MAP_RECORD       local_map;
@@ -215,8 +301,6 @@ int main() {
 
     // start the status update display
     thread t1(dashboardTask);
-    thread t2(EvanInit);
-    thread t3(InstantiatePeripherals);
     // Set up callbacks for autonomous and driver control periods.
     Competition.autonomous(autonomousMain);
 

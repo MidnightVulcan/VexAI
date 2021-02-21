@@ -40,6 +40,97 @@ ai::robot_link       link( PORT1, "robot_32456_1", linkType::manager );
 ai::robot_link       link( PORT1, "robot_32456_1", linkType::worker );
 #endif
 
+
+// drive left 200mm at 50% power on a point
+// use case drive('l', 200, 50, 'p')
+//wheel circumference = 319.1858136mm
+void drive(char dir, double dist, int speed, char turnStyle) {
+	double revo = dist / 319.1858136;
+  switch (dir) {
+	//forward
+	case 'f':
+		MotorFL.setVelocity(speed, velocityUnits::pct);
+		MotorFR.setVelocity(speed, velocityUnits::pct);
+		MotorBL.setVelocity(speed, velocityUnits::pct);
+		MotorBR.setVelocity(speed, velocityUnits::pct);
+
+		MotorFL.rotateFor(revo, rotationUnits::rev, false);
+		MotorFR.rotateFor(revo, rotationUnits::rev, false);
+		MotorBL.rotateFor(revo, rotationUnits::rev, false);
+		MotorBR.rotateFor(revo, rotationUnits::rev, false);
+
+		break;
+
+	//backwards
+	case 'b':
+		MotorFL.setVelocity(-speed, velocityUnits::pct);
+		MotorFR.setVelocity(-speed, velocityUnits::pct);
+		MotorBL.setVelocity(-speed, velocityUnits::pct);
+		MotorBR.setVelocity(-speed, velocityUnits::pct);
+
+		MotorFL.rotateFor(revo, rotationUnits::rev, false);
+		MotorFR.rotateFor(revo, rotationUnits::rev, false);
+		MotorBL.rotateFor(revo, rotationUnits::rev, false);
+		MotorBR.rotateFor(revo, rotationUnits::rev, false);
+
+		break;
+
+	//left
+	case 'l':
+		// turn about a point
+		if (turnStyle == 'a') {
+			MotorFR.setVelocity(speed, velocityUnits::pct);
+			MotorBR.setVelocity(speed, velocityUnits::pct);
+
+			MotorFR.rotateFor(revo, rotationUnits::rev, false)
+			MotorBR.rotateFor(revo, rotationUnits::rev, false)
+		} 
+		//turn on a point
+		else if (turnStyle == 'p') {
+			MotorFL.setVelocity(-speed, velocityUnits::pct);	
+			MotorFR.setVelocity(-speed, velocityUnits::pct);
+			MotorBL.setVelocity(speed, velocityUnits::pct);
+			MotorBR.setVelocity(speed, velocityUnits::pct);
+
+			MotorFL.rotateFor(revo, rotationUnits::rev, false);
+			MotorFR.rotateFor(revo, rotationUnits::rev, false);
+			MotorBL.rotateFor(revo, rotationUnits::rev, false);
+			MotorBR.rotateFor(revo, rotationUnits::rev, false);
+		}
+
+		break;
+
+	// right
+	case 'r':
+		// turn about a point
+		if (turnStyle == 'a') {
+			MotorFL.setVelocity(speed, velocityUnits::pct);
+			MotorBL.setVelocity(speed, velocityUnits::pct);
+
+			MotorFL.rotateFor(revo, rotationUnits::rev, false)
+			MotorBL.rotateFor(revo, rotationUnits::rev, false)
+		} 
+		//turn on a point
+		else if (turnStyle == 'p') {
+			MotorFL.setVelocity(speed, velocityUnits::pct);	
+			MotorFR.setVelocity(speed, velocityUnits::pct);
+			MotorBL.setVelocity(-speed, velocityUnits::pct);
+			MotorBR.setVelocity(-speed, velocityUnits::pct);
+
+			MotorFL.rotateFor(revo, rotationUnits::rev, false);
+			MotorFR.rotateFor(revo, rotationUnits::rev, false);
+			MotorBL.rotateFor(revo, rotationUnits::rev, false);
+			MotorBR.rotateFor(revo, rotationUnits::rev, false);
+		}
+
+		break;
+
+	
+	default:
+		break;
+	}
+}
+
 /*---------------------------------------------------------------------------*/
 /*                                                                           */
 /*                          Auto_Isolation Task                              */
